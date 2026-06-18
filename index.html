@@ -267,7 +267,7 @@ function renderList(){
 function deleteItem(idx){if(!confirm('Usunąć EAN: '+db[idx]?.ean+'?'))return;db.splice(idx,1);saveDB();renderList();}
 const SHELVES = {
   "philips": {
-   
+    label: "PHILIPS LED-LEUCHTMITTEL",
     rows: [[1, 12], [13, 31], [32, 44], [45, 57], [58, 69]],
     items: {
       "1": {ean:"8719514324213",name:"Phillips_str_1"},
@@ -342,7 +342,7 @@ const SHELVES = {
     }
   },
   "sylvania": {
-    
+    label: "SYLVANIA LED-LEUCHTMITTEL",
     rows: [[1, 6], [7, 16], [17, 26], [27, 31], [32, 42]],
     items: {
       "1": {ean:"295770",name:"Sylvania"},
@@ -390,7 +390,7 @@ const SHELVES = {
     }
   },
   "ledvance": {
-    
+    label: "LEDVANCE",
     rows: [[0, 11], [12, 21], [22, 35], [36, 45], [46, 52]],
     items: {
       "0": {ean:"8720169364868",name:"Ledvance"},
@@ -449,7 +449,7 @@ const SHELVES = {
     }
   },
   "philips_hue": {
-   
+    label: "PHILIPS HUE",
     rows: [[1, 7], [8, 19], [20, 25], [26, 29], [30, 36]],
     items: {
       "1": {ean:"8720169155114",name:"Phillips_Hue"},
@@ -491,7 +491,7 @@ const SHELVES = {
     }
   },
   "flair": {
-   
+    label: "FLAIR LED",
     rows: [[1, 20], [21, 43], [44, 57], [58, 78], [79, 86]],
     items: {
       "1": {ean:"4306517597832",name:"Flair_str_1"},
@@ -583,7 +583,7 @@ const SHELVES = {
     }
   },
   "jarzeniowki": {
-  
+    label: "LEUCHTSTOFFROHREN",
     rows: [[1, 22], [23, 38], [39, 63]],
     items: {
       "1": {ean:"8720169309548",name:"Jarzeniowki_str_1"},
@@ -652,7 +652,7 @@ const SHELVES = {
     }
   },
   "specjale": {
-   
+    label: "SPEZIALLAMPEN",
     rows: [[1, 10], [11, 18], [19, 29], [30, 43], [44, 54], [55, 61], [62, 69]],
     items: {
       "1": {ean:"4020058851263",name:"specjale"},
@@ -727,7 +727,7 @@ const SHELVES = {
     }
   },
   "radium": {
-   
+    label: "RADIUM - TECHNISCHES LICHT",
     rows: [[1, 18], [19, 35], [36, 51], [52, 64]],
     items: {
       "1": {ean:"4003558012226",name:"Radius_Led"},
@@ -1287,7 +1287,7 @@ function preloadBuiltinDB(){
   saveDB();localStorage.setItem('mag_preloaded_v5','1');
 }
 // === WIRTUALNE REGAŁY ===
-let activeShelfKey=null, activeShelfPos=null;
+let activeShelfKey=null, activeShelfPos=[];
 
 function shelfIcon(d){
   d = d || '';
@@ -1320,7 +1320,7 @@ function renderShelfPicker(){
 }
 
 function openShelf(key){
-  activeShelfKey=key; activeShelfPos=null;
+  activeShelfKey=key; activeShelfPos=[];
   document.getElementById('shelf-picker').style.display='none';
   const view=document.getElementById('shelf-view');
   view.style.display='block';
@@ -1337,7 +1337,7 @@ function renderShelf(){
     for(let p=from;p<=to;p++){
       const it=s.items[String(p)];
       const d=it?it.name:'poz.'+p;
-      const on=(String(p)===activeShelfPos)?' on':'';
+      const on=activeShelfPos.includes(String(p))?' on':'';
       h+=`<div class="shelf-prod${on}" onclick="clickShelfPos('${p}')" title="Pozycja ${p}"><div class="shelf-card"><div class="shelf-svgwrap">${shelfIcon(d)}</div></div><div class="shelf-ptag"></div><div class="shelf-bn">${p}</div></div>`;
     }
     h+=`</div><div class="shelf-plank"></div>`;
@@ -1347,7 +1347,7 @@ function renderShelf(){
 }
 
 function clickShelfPos(p, fromVoice){
-  activeShelfPos=String(p);
+  activeShelfPos=[String(p)];
   renderShelf();
   const s=SHELVES[activeShelfKey];
   const it=s.items[String(p)];
@@ -1365,19 +1365,44 @@ function clickShelfPos(p, fromVoice){
 const _origSearchProduct = searchProduct;
 searchProduct = function(digits){
   _origSearchProduct(digits);
-  // Jeśli aktywna jest zakładka regałów, znajdź i podświetl pozycję na aktywnym regale
+  // Jeśli aktywna jest zakładka regałów, znajdź i podświetl WSZYSTKIE pozycje z tym EAN na aktywnym regale
   if(document.getElementById('tab-shelf').classList.contains('active')){
+    let foundKey=null, foundPositions=[], foundName=null;
     for(const key in SHELVES){
+      const positions=[];
       for(const pos in SHELVES[key].items){
         if(SHELVES[key].items[pos].ean.endsWith(digits)){
-          if(activeShelfKey!==key)openShelf(key);
-          clickShelfPos(pos, true);
-          return;
+          positions.push(pos);
+          if(!foundName)foundName=SHELVES[key].items[pos].name;
         }
       }
+      if(positions.length>0){foundKey=key;foundPositions=positions;break;}
+    }
+    if(foundKey){
+      if(activeShelfKey!==foundKey)openShelf(foundKey);
+      highlightShelfPositions(foundPositions, foundName);
     }
   }
 };
+
+function highlightShelfPositions(positions, name){
+  activeShelfPos=positions.map(String);
+  renderShelf();
+  const s=SHELVES[activeShelfKey];
+  const card=document.getElementById('result-card');
+  if(positions.length===1){
+    const it=s.items[positions[0]];
+    card.className='result-card found';
+    card.innerHTML=`<div class="result-name">${it.name}</div><div class="result-loc-label">Pozycja</div><div class="result-loc">${positions[0]}</div>`;
+    speak(it.name+', pozycja '+positions[0]);
+  } else {
+    card.className='result-card found';
+    card.innerHTML=`<div class="result-name">${name}</div><div class="result-loc-label">Pozycje (${positions.length})</div><div class="result-loc" style="font-size:28px">${positions.join(', ')}</div>`;
+    speak(name+', pozycje: '+positions.join(', '));
+  }
+  const el=document.querySelector('.shelf-prod.on');
+  if(el)el.scrollIntoView({behavior:'smooth',block:'center',inline:'center'});
+}
 
 loadDB();preloadBuiltinDB();
 setTimeout(()=>{startListening();},800);
