@@ -32,14 +32,25 @@ button{padding:9px 18px;background:#185FA5;color:#fff;border:none;border-radius:
 .ptag{height:6px;background:linear-gradient(to right,#FF5500,#FF8800);width:100%}
 .rowlabel{font-size:11px;color:#888;padding:4px 8px;background:#fff;font-weight:500}
 h1{font-size:18px;padding:14px 16px 0;color:#0C447C}
+.mic-btn{padding:9px 18px;border:none;border-radius:8px;cursor:pointer;font-size:15px;font-weight:600;display:flex;align-items:center;gap:6px}
+.mic-btn.listening{background:#C62828;color:#fff}
+.mic-btn.stopped{background:#1565C0;color:#fff}
+.heard{font-size:13px;color:#888;padding:0 16px 8px;font-family:monospace}
+.dot{width:9px;height:9px;border-radius:50%;background:#4CAF50;display:inline-block;margin-right:5px;animation:blink 1.5s infinite}
+.dot.off{background:#999;animation:none}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
 </style>
 </head>
 <body>
 <h1>Wirtualny Regał — Philips LED-Leuchtmittel</h1>
 <div class="ui">
+  <button class="mic-btn stopped" id="micBtn" onclick="toggleMic()">
+    <span class="dot off" id="micDot"></span><span id="micLabel">Włącz mikrofon</span>
+  </button>
   <input id="ean" placeholder="końcówka EAN..." maxlength="8" inputmode="numeric"/>
   <button onclick="search()">Szukaj</button>
 </div>
+<div class="heard">Słyszę: <span id="heardVal">—</span></div>
 <div class="res" id="res">
   <div class="rp" id="rp">—</div>
   <div><div id="rn" style="font-weight:600;color:#0C447C;font-size:15px"></div><div id="re" style="font-size:12px;color:#185FA5;font-family:monospace"></div></div>
@@ -185,6 +196,78 @@ function search(){
 
 document.getElementById('ean').addEventListener('keydown',function(e){if(e.key==='Enter')search();});
 render();
+
+// === ROZPOZNAWANIE GŁOSU ===
+var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+var recognition = null;
+var listening = false;
+var restartTimer = null;
+
+function toggleMic(){
+  if(listening) stopMic(); else startMic();
+}
+
+function startMic(){
+  if(!SR){ alert('Użyj Chrome na Androidzie'); return; }
+  if(recognition){ try{ recognition.abort(); }catch(e){} }
+  recognition = new SR();
+  recognition.lang = 'pl-PL';
+  recognition.continuous = false;
+  recognition.interimResults = true;
+  recognition.maxAlternatives = 3;
+  recognition.onstart = function(){ listening = true; updateMicUI(true); };
+  recognition.onresult = function(e){
+    var interim = '', final = '';
+    for(var i = e.resultIndex; i < e.results.length; i++){
+      var t = e.results[i][0].transcript;
+      if(e.results[i].isFinal) final += t; else interim += t;
+    }
+    var raw = final || interim;
+    var digits = spokenToDigits(raw);
+    if(digits) document.getElementById('heardVal').textContent = '...' + digits;
+    if(final && digits && digits.length >= 2){
+      document.getElementById('ean').value = digits;
+      search();
+    }
+  };
+  recognition.onerror = function(e){
+    if(e.error === 'not-allowed'){ stopMic(); alert('Zezwól na dostęp do mikrofonu!'); return; }
+    scheduleRestart(300);
+  };
+  recognition.onend = function(){ if(listening) scheduleRestart(150); };
+  try{ recognition.start(); }catch(e){ scheduleRestart(500); }
+}
+
+function stopMic(){
+  listening = false;
+  clearTimeout(restartTimer);
+  try{ recognition && recognition.abort(); }catch(e){}
+  updateMicUI(false);
+}
+
+function scheduleRestart(d){
+  clearTimeout(restartTimer);
+  if(listening) restartTimer = setTimeout(function(){ if(listening) startMic(); }, d);
+}
+
+function updateMicUI(on){
+  document.getElementById('micDot').className = 'dot' + (on ? '' : ' off');
+  document.getElementById('micBtn').className = 'mic-btn ' + (on ? 'listening' : 'stopped');
+  document.getElementById('micLabel').textContent = on ? 'Zatrzymaj mikrofon' : 'Włącz mikrofon';
+}
+
+function spokenToDigits(text){
+  var map = {'zero':'0','jeden':'1','jedna':'1','dwa':'2','dwie':'2','trzy':'3','cztery':'4','pięć':'5','piec':'5','sześć':'6','szesc':'6','siedem':'7','osiem':'8','dziewięć':'9','dziewiec':'9'};
+  var result = '';
+  var words = text.toLowerCase().trim().split(/\s+/);
+  for(var i = 0; i < words.length; i++){
+    var w = words[i];
+    if(map[w]) result += map[w];
+    else result += w.replace(/\D/g, '');
+  }
+  if(!result) result = text.replace(/\D/g, '');
+  return result;
+}
 </script>
 </body>
 </html>
