@@ -1355,7 +1355,7 @@ function clickShelfPos(p, fromVoice){
   if(it){
     card.className='result-card found';
     card.innerHTML=`<div class="result-name">${it.name}</div><div class="result-loc-label">${s.label} · Pozycja</div><div class="result-loc">${p}</div>`;
-    if(fromVoice)speak(s.label+', pozycja '+p);
+    if(fromVoice)speak(it.name+', pozycja '+p);
   }
   const el=document.querySelector('.shelf-prod.on');
   if(el)el.scrollIntoView({behavior:'smooth',block:'center',inline:'center'});
