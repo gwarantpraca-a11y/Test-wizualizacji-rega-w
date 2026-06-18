@@ -208,7 +208,7 @@ function searchProduct(digits){
     speak('Znaleziono '+matches.length+' towarów. '+matches.slice(0,3).map(m=>`${m.name}, pozycja ${m.location}`).join('. '));
   }
 }
-function speak(text){if(!window.speechSynthesis)return;speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang='pl-PL';u.rate=0.95;speechSynthesis.speak(u);}
+function speak(text){if(!window.speechSynthesis)return;speechSynthesis.cancel();const clean=String(text).replace(/_/g,' ');const u=new SpeechSynthesisUtterance(clean);u.lang='pl-PL';u.rate=0.95;speechSynthesis.speak(u);}
 function saveItem(){
   const ean=document.getElementById('f-ean').value.trim(),name=document.getElementById('f-name').value.trim(),loc=document.getElementById('f-loc').value.trim();
   if(!ean||!name||!loc){alert('Wypełnij wszystkie pola!');return;}
