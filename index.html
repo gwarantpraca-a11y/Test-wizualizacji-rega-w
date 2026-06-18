@@ -165,7 +165,16 @@ function render(){
   document.getElementById('body').innerHTML=h;
 }
 
-function clk(p){
+function speak(text){
+  if(!window.speechSynthesis) return;
+  speechSynthesis.cancel();
+  var u = new SpeechSynthesisUtterance(text);
+  u.lang = 'pl-PL';
+  u.rate = 0.95;
+  speechSynthesis.speak(u);
+}
+
+function clk(p, fromVoice){
   ap=p; render();
   var pr=P[p]||{e:'',d:'poz.'+p};
   document.getElementById('res').className='res on';
@@ -174,9 +183,12 @@ function clk(p){
   document.getElementById('re').textContent=pr.e;
   var el=document.querySelector('.prod.on');
   if(el) el.scrollIntoView({behavior:'smooth',block:'center',inline:'center'});
+  if(fromVoice){
+    speak('Philips, pozycja ' + String(p).split('').join(' '));
+  }
 }
 
-function search(){
+function search(fromVoice){
   var s=document.getElementById('ean').value.trim();
   if(!s) return;
   var foundPos=null;
@@ -189,9 +201,10 @@ function search(){
     document.getElementById('rp').textContent='?';
     document.getElementById('rn').textContent='Nie znaleziono';
     document.getElementById('re').textContent='EAN: ...'+s;
+    speak('Nie znaleziono towaru z tym kodem');
     return;
   }
-  clk(parseInt(foundPos));
+  clk(parseInt(foundPos), fromVoice);
 }
 
 document.getElementById('ean').addEventListener('keydown',function(e){if(e.key==='Enter')search();});
@@ -227,7 +240,7 @@ function startMic(){
     if(digits) document.getElementById('heardVal').textContent = '...' + digits;
     if(final && digits && digits.length >= 2){
       document.getElementById('ean').value = digits;
-      search();
+      search(true);
     }
   };
   recognition.onerror = function(e){
