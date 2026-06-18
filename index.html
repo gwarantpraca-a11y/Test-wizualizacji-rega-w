@@ -1324,7 +1324,7 @@ function renderShelf(){
     h+=`</div><div class="shelf-plank"></div>`;
   }
   h+=`</div><div class="shelf-floor"></div>`;
-  view.innerHTML=h;
+  document.getElementById('shelf-view').innerHTML=h;
 }
 
 function clickShelfPos(p, fromVoice){
