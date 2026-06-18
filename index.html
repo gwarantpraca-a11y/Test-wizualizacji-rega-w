@@ -157,7 +157,7 @@ let db=[];
 function loadDB(){try{db=JSON.parse(localStorage.getItem('mag_v2')||'[]');}catch(e){db=[];}updateCount();}
 function saveDB(){localStorage.setItem('mag_v2',JSON.stringify(db));updateCount();}
 function updateCount(){document.getElementById('db-count').textContent=db.length+' towarów';}
-function showTab(n){['add','scan-list','list','shelf'].forEach(t=>{document.getElementById('panel-'+t).classList.toggle('active',t===n);document.getElementById('tab-'+t).classList.toggle('active',t===n);});if(n==='list')renderList();if(n==='shelf')renderShelfPicker();}
+function showTab(n){['add','scan-list','list','shelf'].forEach(t=>{document.getElementById('panel-'+t).classList.toggle('active',t===n);document.getElementById('tab-'+t).classList.toggle('active',t===n);});if(n==='list')renderList();if(n==='shelf'){if(activeShelfKey){document.getElementById('shelf-picker').style.display='none';document.getElementById('shelf-view').style.display='block';}else{renderShelfPicker();}}}
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
 let recognition=null,listening=false,restartTimer=null;
 function toggleListening(){if(listening)stopListening();else startListening();}
@@ -1361,26 +1361,38 @@ function clickShelfPos(p, fromVoice){
   if(el)el.scrollIntoView({behavior:'smooth',block:'center',inline:'center'});
 }
 
-// Rozszerzenie wyszukiwania głosowego: jeśli jesteśmy na zakładce Regały, podświetl też na regale
+// Rozszerzenie wyszukiwania głosowego: zawsze szukaj też na regałach (niezależnie od aktywnej zakładki),
+// żeby wynik był gotowy gdy użytkownik przełączy się na zakładkę Regały
 const _origSearchProduct = searchProduct;
 searchProduct = function(digits){
   _origSearchProduct(digits);
-  // Jeśli aktywna jest zakładka regałów, znajdź i podświetl WSZYSTKIE pozycje z tym EAN na aktywnym regale
-  if(document.getElementById('tab-shelf').classList.contains('active')){
-    let foundKey=null, foundPositions=[], foundName=null;
-    for(const key in SHELVES){
-      const positions=[];
-      for(const pos in SHELVES[key].items){
-        if(SHELVES[key].items[pos].ean.endsWith(digits)){
-          positions.push(pos);
-          if(!foundName)foundName=SHELVES[key].items[pos].name;
-        }
+  let foundKey=null, foundPositions=[], foundName=null;
+  for(const key in SHELVES){
+    const positions=[];
+    for(const pos in SHELVES[key].items){
+      if(SHELVES[key].items[pos].ean.endsWith(digits)){
+        positions.push(pos);
+        if(!foundName)foundName=SHELVES[key].items[pos].name;
       }
-      if(positions.length>0){foundKey=key;foundPositions=positions;break;}
     }
-    if(foundKey){
-      if(activeShelfKey!==foundKey)openShelf(foundKey);
-      highlightShelfPositions(foundPositions, foundName);
+    if(positions.length>0){foundKey=key;foundPositions=positions;break;}
+  }
+  if(foundKey){
+    openShelf(foundKey);
+    activeShelfPos=foundPositions.map(String);
+    renderShelf();
+    const el=document.querySelector('.shelf-prod.on');
+    if(el)el.scrollIntoView({behavior:'smooth',block:'center',inline:'center'});
+    // Jeśli jesteśmy aktualnie na zakładce Regały, zaktualizuj też kartę wyniku i przeczytaj głosem
+    if(document.getElementById('tab-shelf').classList.contains('active')){
+      const card=document.getElementById('result-card');
+      if(foundPositions.length===1){
+        card.className='result-card found';
+        card.innerHTML=`<div class="result-name">${foundName}</div><div class="result-loc-label">Pozycja</div><div class="result-loc">${foundPositions[0]}</div>`;
+      } else {
+        card.className='result-card found';
+        card.innerHTML=`<div class="result-name">${foundName}</div><div class="result-loc-label">Pozycje (${foundPositions.length})</div><div class="result-loc" style="font-size:28px">${foundPositions.join(', ')}</div>`;
+      }
     }
   }
 };
