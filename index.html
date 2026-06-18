@@ -267,7 +267,7 @@ function renderList(){
 function deleteItem(idx){if(!confirm('Usunąć EAN: '+db[idx]?.ean+'?'))return;db.splice(idx,1);saveDB();renderList();}
 const SHELVES = {
   "philips": {
-    label: "PHILIPS LED-LEUCHTMITTEL",
+   
     rows: [[1, 12], [13, 31], [32, 44], [45, 57], [58, 69]],
     items: {
       "1": {ean:"8719514324213",name:"Phillips_str_1"},
@@ -342,7 +342,7 @@ const SHELVES = {
     }
   },
   "sylvania": {
-    label: "SYLVANIA LED-LEUCHTMITTEL",
+    
     rows: [[1, 6], [7, 16], [17, 26], [27, 31], [32, 42]],
     items: {
       "1": {ean:"295770",name:"Sylvania"},
@@ -390,7 +390,7 @@ const SHELVES = {
     }
   },
   "ledvance": {
-    label: "LEDVANCE",
+    
     rows: [[0, 11], [12, 21], [22, 35], [36, 45], [46, 52]],
     items: {
       "0": {ean:"8720169364868",name:"Ledvance"},
@@ -449,7 +449,7 @@ const SHELVES = {
     }
   },
   "philips_hue": {
-    label: "PHILIPS HUE",
+   
     rows: [[1, 7], [8, 19], [20, 25], [26, 29], [30, 36]],
     items: {
       "1": {ean:"8720169155114",name:"Phillips_Hue"},
@@ -491,7 +491,7 @@ const SHELVES = {
     }
   },
   "flair": {
-    label: "FLAIR LED",
+   
     rows: [[1, 20], [21, 43], [44, 57], [58, 78], [79, 86]],
     items: {
       "1": {ean:"4306517597832",name:"Flair_str_1"},
@@ -583,7 +583,7 @@ const SHELVES = {
     }
   },
   "jarzeniowki": {
-    label: "LEUCHTSTOFFROHREN",
+  
     rows: [[1, 22], [23, 38], [39, 63]],
     items: {
       "1": {ean:"8720169309548",name:"Jarzeniowki_str_1"},
@@ -652,7 +652,7 @@ const SHELVES = {
     }
   },
   "specjale": {
-    label: "SPEZIALLAMPEN",
+   
     rows: [[1, 10], [11, 18], [19, 29], [30, 43], [44, 54], [55, 61], [62, 69]],
     items: {
       "1": {ean:"4020058851263",name:"specjale"},
@@ -727,7 +727,7 @@ const SHELVES = {
     }
   },
   "radium": {
-    label: "RADIUM - TECHNISCHES LICHT",
+   
     rows: [[1, 18], [19, 35], [36, 51], [52, 64]],
     items: {
       "1": {ean:"4003558012226",name:"Radius_Led"},
